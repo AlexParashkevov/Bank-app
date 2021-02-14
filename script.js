@@ -79,4 +79,24 @@ const displayMovements = function (movements) {
   });
 };
 displayMovements(account1.movements);
+//balance
+const calcDisplayBalance = function (movements) {
+  const balance = movements.reduce(function (acc, move) {
+    return acc + move;
+  }, 0);
+  labelBalance.textContent = `${balance}€`;
+};
+calcDisplayBalance(account1.movements);
 /////////////////////////////////////////////////
+//create usernames
+const createUsernames = function (acc) {
+  acc.forEach(function (acc) {
+    acc.username = acc.owner
+      .toLowerCase()
+      .split(' ')
+      .map(word => word[0])
+      .join('');
+  });
+};
+createUsernames(accounts);
+console.log(accounts);
