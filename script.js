@@ -85,10 +85,11 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   containerMovements.innerHTML = '';
   // .textContent = 0
-  movements.forEach(function (move, i) {
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+  movs.forEach(function (move, i) {
     const type = move > 0 ? 'deposit' : 'withdrawal';
     //template literal
     const html = `
@@ -104,11 +105,11 @@ const displayMovements = function (movements) {
 };
 
 //balance
-const calcDisplayBalance = function (movements) {
-  const balance = movements.reduce(function (acc, move) {
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce(function (acc, move) {
     return acc + move;
   }, 0);
-  labelBalance.textContent = `${balance}€`;
+  labelBalance.textContent = `${acc.balance}€`;
 };
 
 const caldDisplaySumm = function (account) {
@@ -155,6 +156,11 @@ console.log(account);
 //     console.log(acc);
 //   }
 // }
+const upDateUI = function (acc) {
+  displayMovements(acc.movements);
+  calcDisplayBalance(acc);
+  caldDisplaySumm(acc);
+};
 //EVENT HANDLER
 let currAcc;
 btnLogin.addEventListener('click', function (event) {
@@ -176,8 +182,59 @@ btnLogin.addEventListener('click', function (event) {
     inputLoginPin.blur();
     console.log('LOGIN');
     containerApp.style.opacity = 100;
-    displayMovements(currAcc.movements);
-    calcDisplayBalance(currAcc.movements);
-    caldDisplaySumm(currAcc);
+    //update ui
+    upDateUI(currAcc);
   }
+});
+btnTransfer.addEventListener('click', function (event) {
+  event.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const recieverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';
+  if (
+    amount > 0 &&
+    recieverAcc &&
+    currAcc.balance >= amount &&
+    recieverAcc?.username !== currAcc.username
+  ) {
+    currAcc.movements.push(-amount);
+    recieverAcc.movements.push(amount);
+    //update ui
+    upDateUI(currAcc);
+  }
+});
+btnLoan.addEventListener('click', function (event) {
+  event.preventDefault();
+  const amount = Number(inputLoanAmount.value);
+  if (amount > 0 && currAcc.movements.some(move => move >= amount * 0.1)) {
+    //add movement
+    currAcc.movements.push(amount);
+    upDateUI(currAcc);
+  }
+  inputLoanAmount.value = '';
+});
+//closing account with findindex
+btnClose.addEventListener('click', function (event) {
+  event.preventDefault();
+
+  if (
+    inputCloseUsername.value === currAcc.username &&
+    Number(inputClosePin.value) === currAcc.pin
+  ) {
+    const index = accounts.findIndex(acc => acc.username === currAcc.username);
+    console.log(index);
+    //delete account
+    accounts.splice(index, 1);
+    containerApp.style.opacity = 0;
+  }
+  inputCloseUsername.value = inputClosePin.value = '';
+});
+//sorting
+let sorted = false;
+btnSort.addEventListener('click', function (event) {
+  event.preventDefault();
+  displayMovements(currAcc.movements, !sorted);
+  sorted = !sorted;
 });
